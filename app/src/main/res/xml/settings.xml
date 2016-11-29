@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <EditTextPreference
+        android:key="choiseTown"
+        android:title="Город"
+        android:summary="Нажмите для изменения города"
+        android:defaultValue="moscow"
+        android:dialogTitle="Введите название города"
+        android:inputType="textAutoComplete"
+        />
+
+
+</PreferenceScreen>
