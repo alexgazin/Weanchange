@@ -202,7 +202,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
 
                         String celcuiss = (response.body().getMain().getTemp().toString());
-                        mCelcuis.setText((celcuiss.substring(0,2)).replace(".", "") + " °C");
+                        mCelcuis.setText((celcuiss.substring(0,3)).replace(".", "") + " °C");
 
                         mNameTown.setText(response.body().getName());
 
