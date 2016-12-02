@@ -3,41 +3,44 @@ package com.agazin.myapplication;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.preference.PreferenceManager;
+import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.CardView;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.agazin.myapplication.ExWeatherModel.ExWeather;
+import com.agazin.myapplication.Settings.MyPreferenceActivity;
 import com.agazin.myapplication.api.*;
 import com.agazin.myapplication.ExchangeModel.*;
 import com.agazin.myapplication.WeatherModel.Weather;
 
 
-import org.w3c.dom.Text;
-
-import java.util.List;
-
-import butterknife.BindView;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
+import static android.view.View.GONE;
+import static android.view.View.VISIBLE;
 import static java.lang.String.valueOf;
 
 
@@ -48,6 +51,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     private static String WEATHER_API = "82eff2c845841c89c837d4e125613d83";
 
     private TextView mUsd, mEuro, mPreviousUsd, mPreviousEur, mDifferenceUsd, mDifferenceEur;
+    private TextView mDate1, mDate2, mDate3, mCelcius1, mCelcius2, mCelcius3, mDiscription1, mDiscription2, mDiscription3;
     private TextView mCelcuis, mNameTown, mWind, mHumidity, mWeatherSys;
     private ImageView mIconWeather;
     private SharedPreferences mSp;
@@ -55,6 +59,9 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private ProgressDialog mLoadDataDialog;
     private NotificationManager mNotificationManager;
+    private CardView cardView1, cardView2;
+    private CoordinatorLayout mCoordinatorLayout;
+
 
 
     @Override
@@ -77,12 +84,27 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh_layout);
         mSwipeRefreshLayout.setOnRefreshListener(this);
         mNotificationManager=(NotificationManager) this.getApplicationContext().getSystemService(this.NOTIFICATION_SERVICE);
+        cardView1 = (CardView) findViewById(R.id.card_view);
+        cardView2 = (CardView) findViewById(R.id.card_view1);
+        mCoordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinatorLayout);
+        mDate1 = (TextView) findViewById(R.id.date1);
+        mCelcius1 = (TextView) findViewById(R.id.celcius1);
+        mDiscription1 = (TextView) findViewById(R.id.discription1);
+        mDate2 = (TextView) findViewById(R.id.date2);
+        mCelcius2 = (TextView) findViewById(R.id.celcius2);
+        mDiscription2 = (TextView) findViewById(R.id.discription2);
+        mDate3 = (TextView) findViewById(R.id.date3);
+        mCelcius3 = (TextView) findViewById(R.id.celcius3);
+        mDiscription3 = (TextView) findViewById(R.id.discription3);
 
-        loadExchangeRates();
-        loadWeather();
+        cardView1.setVisibility(GONE);
+        cardView2.setVisibility(GONE);
+        checkConnection();
+
     }
 
     public void onRefresh() {
+        checkConnection();
         // начинаем показывать прогресс
         mSwipeRefreshLayout.setRefreshing(true);
         // ждем 3 секунды и прячем прогресс
@@ -91,6 +113,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             public void run() {
                 loadWeather();
                 loadExchangeRates();
+                loadExWeather();
             }
         }, 1000);
     }
@@ -109,13 +132,13 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     }
 
     public void showSettings(MenuItem item) {
-        Intent intent = new Intent(this, com.agazin.myapplication.MyPreferenceActivity.class);
+        Intent intent = new Intent(this, MyPreferenceActivity.class);
         startActivity(intent);
     }
 
 
-
-        public void loadExchangeRates() {
+    // Грузим курс валют
+    public void loadExchangeRates() {
             Retrofit client = new Retrofit.Builder()
                     .baseUrl(EXCHANGE_URL)
                     .addConverterFactory(GsonConverterFactory.create())
@@ -128,6 +151,8 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 @Override
                 public void onResponse(Call<ExchangeRates> call, Response<ExchangeRates> response) {
                     try {
+
+                        cardView2.setVisibility(VISIBLE);
 
                         String usdd = ("$ " + response.body().getValute().getuSD().getValue().toString());
                         mUsd.setText(usdd.substring(0, 7));
@@ -173,14 +198,25 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 @Override
                 public void onFailure(Call<ExchangeRates> call, Throwable t) {
                     Log.d("Error", t.toString());
+
+                    mSwipeRefreshLayout.setRefreshing(false);
+
+                    Snackbar mSnackbar = Snackbar.make(mCoordinatorLayout, "Не удалось загрузить", Snackbar.LENGTH_INDEFINITE)
+                            .setAction("Повторить", new View.OnClickListener() {
+                                @Override
+                                public void onClick(View view) {
+                                    checkConnection();
+                                }
+                            });
+                    mSnackbar.show();
                 }
             });
         }
 
-        public void loadWeather() {
-            final ProgressDialog loading = ProgressDialog.show(this, "Загрузка", "Пожалуйста, подождите...", false, false);
+    // Грузим основную погоду
+    public void loadWeather() {
 
-            mChoiseTownFromSettings = mSp.getString("choiseTown", "");
+        mChoiseTownFromSettings = mSp.getString("choiseTown", "");
 
             Retrofit client = new Retrofit.Builder()
                     .baseUrl(WEATHER_URL)
@@ -191,14 +227,16 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             Call<Weather> call = service.getValues(
                     WEATHER_API,
                     mChoiseTownFromSettings,
-                    "metric");
+                    "metric",
+                    "ru");
 
             call.enqueue(new Callback<Weather>() {
                 @Override
                 public void onResponse(Call<Weather> call, Response<Weather> response) {
                     try {
                         mSwipeRefreshLayout.setRefreshing(false);
-                        loading.dismiss();
+                        mLoadDataDialog.dismiss();
+                        cardView1.setVisibility(VISIBLE);
 
 
                         String celcuiss = (response.body().getMain().getTemp().toString());
@@ -210,7 +248,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                         mWind.setText("Ветер: " + (windd.substring(0,2)).replace(".", "")  + " м/с");
 
                         mHumidity.setText("Влажность: " + response.body().getMain().getHumidity() + "%");
-                        mWeatherSys.setText(response.body().getWeather().get(0).getMain());
+                        mWeatherSys.setText(response.body().getWeather().get(0).getDescription());
 
                         // Делаем картинку погоды (день)
                         if (response.body().getWeather().get(0).getIcon().equals("01d")) {
@@ -266,28 +304,142 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 @Override
                 public void onFailure(Call<Weather> call, Throwable t) {
                     Log.d("Error", t.toString());
+
+                    mSwipeRefreshLayout.setRefreshing(false);
+
+                    Snackbar mSnackbar = Snackbar.make(mCoordinatorLayout, "Не удалось загрузить", Snackbar.LENGTH_INDEFINITE)
+                            .setAction("Повторить", new View.OnClickListener() {
+                                @Override
+                                public void onClick(View view) {
+                                    checkConnection();
+                                }
+                            });
+                    mSnackbar.show();
                 }
             });
         }
 
+    // Грузим расширенную погоду
+    public void loadExWeather() {
 
-    public void notification(View view) {
-        Intent resultIntent = new Intent(this, MainActivity.class);
+        mChoiseTownFromSettings = mSp.getString("choiseTown", "");
 
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-        stackBuilder.addParentStack(MainActivity.class);
-        stackBuilder.addNextIntent(resultIntent);
+        Retrofit client = new Retrofit.Builder()
+                .baseUrl(WEATHER_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
 
-        PendingIntent resultPending = stackBuilder
-                .getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+        ExWeatherApi service = client.create(ExWeatherApi.class);
+        Call<ExWeather> call = service.getValues(
+                WEATHER_API,
+                mChoiseTownFromSettings,
+                "metric",
+                "ru");
 
-        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this)
-                .setSmallIcon(R.mipmap.ic_launcher) // notification icon
-                .setContentTitle("Погода") // main title of the notification
-                .setContentText(mNameTown.getText() + " " + mCelcuis.getText() + " °С"+ " | " + mUsd.getText() + " " + mEuro.getText()) // notification text
-                .setContentIntent(resultPending); // notification intent
+        call.enqueue(new Callback<ExWeather>() {
+            @Override
+            public void onResponse(Call<ExWeather> call, Response<ExWeather> response) {
+                try {
+                    mSwipeRefreshLayout.setRefreshing(false);
 
-        mNotificationManager.notify(10, mBuilder.build());
+                    // грузим первую погоду на следующий день
+                    String date = (response.body().getList().get(9).getDtTxt().toString());
+                    String date_ = (date.substring(5,7));
+                    String date__ = (date.substring(8,10));
+                    mDate1.setText((date__ + "/" + date_ + ":"));
+
+                    String celcuiss = (response.body().getList().get(9).getMain().getTemp().toString());
+                    mCelcius1.setText((celcuiss.substring(0,3)).replace(".", "") + " °C");
+
+                    mDiscription1.setText(response.body().getList().get(9).getWeather().get(0).getDescription().toString());
+                    ////////////
+
+                    // грузим вторую погоду через день
+                    String date1 = (response.body().getList().get(16).getDtTxt().toString());
+                    String date___ = (date1.substring(5,7));
+                    String date____ = (date1.substring(8,10));
+                    mDate2.setText((date____ + "/" + date___ + ":"));
+
+                    String celcuiss1 = (response.body().getList().get(16).getMain().getTemp().toString());
+                    mCelcius2.setText((celcuiss1.substring(0,3)).replace(".", "") + " °C");
+
+                    mDiscription2.setText(response.body().getList().get(16).getWeather().get(0).getDescription().toString());
+                    ////////////
+
+                    // грузим вторую погоду через два дня
+                    String date3 = (response.body().getList().get(24).getDtTxt().toString());
+                    String date_____ = (date3.substring(5,7));
+                    String date______ = (date3.substring(8,10));
+                    mDate3.setText((date______ + "/" + date_____ + ":"));
+
+                    String celcuiss2 = (response.body().getList().get(24).getMain().getTemp().toString());
+                    mCelcius3.setText((celcuiss2.substring(0,3)).replace(".", "") + " °C");
+
+                    mDiscription3.setText(response.body().getList().get(24).getWeather().get(0).getDescription().toString());
+
+
+                } catch (Exception e) {
+                    Log.d("onResponse", "There is an error");
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ExWeather> call, Throwable t) {
+                Log.d("Error", t.toString());
+
+                mSwipeRefreshLayout.setRefreshing(false);
+
+                Snackbar mSnackbar = Snackbar.make(mCoordinatorLayout, "Не удалось загрузить", Snackbar.LENGTH_INDEFINITE)
+                        .setAction("Повторить", new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                checkConnection();
+                            }
+                        });
+                mSnackbar.show();
+            }
+        });
     }
+
+
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+    }
+
+
+    protected boolean isOnline() {
+
+        ConnectivityManager cm = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        if (netInfo != null && netInfo.isConnectedOrConnecting()) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public void checkConnection(){
+        if (isOnline()) {
+            mLoadDataDialog = ProgressDialog.show(this, "Загрузка", "Пожалуйста, подождите...", false, false);
+
+            loadExchangeRates();
+            loadWeather();
+            loadExWeather();
+        } else {
+            mSwipeRefreshLayout.setRefreshing(false);
+
+            Snackbar mSnackbar = Snackbar.make(mCoordinatorLayout, "Не удалось загрузить", Snackbar.LENGTH_INDEFINITE)
+                    .setAction("Повторить", new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            checkConnection();
+                        }
+                    });
+                    mSnackbar.show();
+        }
+
+    }
+
 }
 

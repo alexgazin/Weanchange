@@ -15,5 +15,6 @@ public interface WeatherApi {
     @GET("/data/2.5/weather")
     Call<Weather> getValues(@Query("appid") String appid,
                             @Query("q") String town,
-                            @Query("units") String metric);
+                            @Query("units") String metric,
+                            @Query("lang") String lang);
 }
