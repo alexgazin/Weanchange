@@ -10,8 +10,6 @@ import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.preference.PreferenceManager;
-import android.support.design.widget.CoordinatorLayout;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -23,8 +21,10 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.agazin.myapplication.ExWeatherModel.ExWeather;
 import com.agazin.myapplication.Settings.MyPreferenceActivity;
@@ -32,6 +32,13 @@ import com.agazin.myapplication.api.*;
 import com.agazin.myapplication.ExchangeModel.*;
 import com.agazin.myapplication.WeatherModel.Weather;
 
+
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -52,15 +59,15 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
     private TextView mUsd, mEuro, mPreviousUsd, mPreviousEur, mDifferenceUsd, mDifferenceEur;
     private TextView mDate1, mDate2, mDate3, mCelcius1, mCelcius2, mCelcius3, mDiscription1, mDiscription2, mDiscription3;
-    private TextView mCelcuis, mNameTown, mWind, mHumidity, mWeatherSys;
+    private TextView mCelcuis, mNameTown, mWind, mHumidity, mWeatherSys, mLastUpdate;
     private ImageView mIconWeather;
     private SharedPreferences mSp;
     private String mChoiseTownFromSettings;
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private ProgressDialog mLoadDataDialog;
-    private NotificationManager mNotificationManager;
     private CardView cardView1, cardView2;
-    private CoordinatorLayout mCoordinatorLayout;
+    private static SharedPreferences mSharedPref;
+    private static SharedPreferences.Editor mEditor;
 
 
 
@@ -83,10 +90,8 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         mDifferenceEur = (TextView) findViewById(R.id.differenceEur);
         mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh_layout);
         mSwipeRefreshLayout.setOnRefreshListener(this);
-        mNotificationManager=(NotificationManager) this.getApplicationContext().getSystemService(this.NOTIFICATION_SERVICE);
         cardView1 = (CardView) findViewById(R.id.card_view);
         cardView2 = (CardView) findViewById(R.id.card_view1);
-        mCoordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinatorLayout);
         mDate1 = (TextView) findViewById(R.id.date1);
         mCelcius1 = (TextView) findViewById(R.id.celcius1);
         mDiscription1 = (TextView) findViewById(R.id.discription1);
@@ -96,6 +101,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         mDate3 = (TextView) findViewById(R.id.date3);
         mCelcius3 = (TextView) findViewById(R.id.celcius3);
         mDiscription3 = (TextView) findViewById(R.id.discription3);
+        mLastUpdate = (TextView) findViewById(R.id.lastUpdate);
 
         cardView1.setVisibility(GONE);
         cardView2.setVisibility(GONE);
@@ -122,6 +128,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     protected void onResume() {
         super.onResume();
         loadWeather();
+        loadExWeather();
     }
 
     @Override
@@ -189,6 +196,14 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                             mDifferenceEur.setText((String.valueOf(f).substring(0,4)));
                             mDifferenceEur.setTextColor(Color.RED);
                         }
+
+                        // Задаем время последнего апдейта информации
+                        DateFormat df = new SimpleDateFormat("dd MMM, HH:mm");
+                        String date11 = df.format(Calendar.getInstance().getTime());
+                        mLastUpdate.setText("Обновлено: "  + date11);
+
+                        // сохраняем всю информацию в sp
+                       saveAllDataToSharedPref();
                     } catch (Exception e) {
                         Log.d("onResponse", "There is an error");
                         e.printStackTrace();
@@ -201,14 +216,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
                     mSwipeRefreshLayout.setRefreshing(false);
 
-                    Snackbar mSnackbar = Snackbar.make(mCoordinatorLayout, "Не удалось загрузить", Snackbar.LENGTH_INDEFINITE)
-                            .setAction("Повторить", new View.OnClickListener() {
-                                @Override
-                                public void onClick(View view) {
-                                    checkConnection();
-                                }
-                            });
-                    mSnackbar.show();
+
                 }
             });
         }
@@ -216,7 +224,11 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     // Грузим основную погоду
     public void loadWeather() {
 
-        mChoiseTownFromSettings = mSp.getString("choiseTown", "");
+        if (mSp.getString("choiseTown", "").equals("")) {
+            mChoiseTownFromSettings = mSp.getString("choiseTown", "Moscow");
+        } else {
+            mChoiseTownFromSettings = mSp.getString("choiseTown", "");
+        }
 
             Retrofit client = new Retrofit.Builder()
                     .baseUrl(WEATHER_URL)
@@ -239,8 +251,8 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                         cardView1.setVisibility(VISIBLE);
 
 
-                        String celcuiss = (response.body().getMain().getTemp().toString());
-                        mCelcuis.setText((celcuiss.substring(0,3)).replace(".", "") + " °C");
+                        String celcuiss4 = (response.body().getMain().getTemp().toString());
+                        mCelcuis.setText((celcuiss4.substring(0,3)).replace(".", "") + " °C");
 
                         mNameTown.setText(response.body().getName());
 
@@ -295,6 +307,13 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                         } else {
                             mIconWeather.setImageResource(R.drawable.sun);
                         }
+
+                        // Задаем время последнего апдейта информации
+                        DateFormat df = new SimpleDateFormat("dd MMM, HH:mm");
+                        String date11 = df.format(Calendar.getInstance().getTime());
+                        mLastUpdate.setText("Обновлено: "  + date11);
+
+                        saveAllDataToSharedPref();
                     } catch (Exception e) {
                         Log.d("onResponse", "There is an error");
                         e.printStackTrace();
@@ -307,14 +326,6 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
                     mSwipeRefreshLayout.setRefreshing(false);
 
-                    Snackbar mSnackbar = Snackbar.make(mCoordinatorLayout, "Не удалось загрузить", Snackbar.LENGTH_INDEFINITE)
-                            .setAction("Повторить", new View.OnClickListener() {
-                                @Override
-                                public void onClick(View view) {
-                                    checkConnection();
-                                }
-                            });
-                    mSnackbar.show();
                 }
             });
         }
@@ -322,7 +333,11 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     // Грузим расширенную погоду
     public void loadExWeather() {
 
-        mChoiseTownFromSettings = mSp.getString("choiseTown", "");
+        if (mSp.getString("choiseTown", "").equals("")) {
+            mChoiseTownFromSettings = mSp.getString("choiseTown", "Moscow");
+        } else {
+            mChoiseTownFromSettings = mSp.getString("choiseTown", "");
+        }
 
         Retrofit client = new Retrofit.Builder()
                 .baseUrl(WEATHER_URL)
@@ -343,41 +358,46 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                     mSwipeRefreshLayout.setRefreshing(false);
 
                     // грузим первую погоду на следующий день
-                    String date = (response.body().getList().get(9).getDtTxt().toString());
+                    String date = (response.body().getList().get(5).getDtTxt().toString());
                     String date_ = (date.substring(5,7));
                     String date__ = (date.substring(8,10));
                     mDate1.setText((date__ + "/" + date_ + ":"));
 
-                    String celcuiss = (response.body().getList().get(9).getMain().getTemp().toString());
+                    String celcuiss = (response.body().getList().get(5).getMain().getTemp().toString());
                     mCelcius1.setText((celcuiss.substring(0,3)).replace(".", "") + " °C");
 
-                    mDiscription1.setText(response.body().getList().get(9).getWeather().get(0).getDescription().toString());
+                    mDiscription1.setText(response.body().getList().get(5).getWeather().get(0).getDescription().toString());
                     ////////////
 
                     // грузим вторую погоду через день
-                    String date1 = (response.body().getList().get(16).getDtTxt().toString());
+                    String date1 = (response.body().getList().get(13).getDtTxt().toString());
                     String date___ = (date1.substring(5,7));
                     String date____ = (date1.substring(8,10));
                     mDate2.setText((date____ + "/" + date___ + ":"));
 
-                    String celcuiss1 = (response.body().getList().get(16).getMain().getTemp().toString());
+                    String celcuiss1 = (response.body().getList().get(13).getMain().getTemp().toString());
                     mCelcius2.setText((celcuiss1.substring(0,3)).replace(".", "") + " °C");
 
-                    mDiscription2.setText(response.body().getList().get(16).getWeather().get(0).getDescription().toString());
+                    mDiscription2.setText(response.body().getList().get(13).getWeather().get(0).getDescription().toString());
                     ////////////
 
                     // грузим вторую погоду через два дня
-                    String date3 = (response.body().getList().get(24).getDtTxt().toString());
+                    String date3 = (response.body().getList().get(21).getDtTxt().toString());
                     String date_____ = (date3.substring(5,7));
                     String date______ = (date3.substring(8,10));
                     mDate3.setText((date______ + "/" + date_____ + ":"));
 
-                    String celcuiss2 = (response.body().getList().get(24).getMain().getTemp().toString());
+                    String celcuiss2 = (response.body().getList().get(21).getMain().getTemp().toString());
                     mCelcius3.setText((celcuiss2.substring(0,3)).replace(".", "") + " °C");
 
-                    mDiscription3.setText(response.body().getList().get(24).getWeather().get(0).getDescription().toString());
+                    mDiscription3.setText(response.body().getList().get(21).getWeather().get(0).getDescription().toString());
 
+                    // Задаем время последнего апдейта информации
+                    DateFormat df = new SimpleDateFormat("dd MMM, HH:mm");
+                    String date11 = df.format(Calendar.getInstance().getTime());
+                    mLastUpdate.setText("Обновлено: "  + date11);
 
+                    saveAllDataToSharedPref();
                 } catch (Exception e) {
                     Log.d("onResponse", "There is an error");
                     e.printStackTrace();
@@ -390,14 +410,6 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
                 mSwipeRefreshLayout.setRefreshing(false);
 
-                Snackbar mSnackbar = Snackbar.make(mCoordinatorLayout, "Не удалось загрузить", Snackbar.LENGTH_INDEFINITE)
-                        .setAction("Повторить", new View.OnClickListener() {
-                            @Override
-                            public void onClick(View view) {
-                                checkConnection();
-                            }
-                        });
-                mSnackbar.show();
             }
         });
     }
@@ -422,24 +434,77 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     public void checkConnection(){
         if (isOnline()) {
             mLoadDataDialog = ProgressDialog.show(this, "Загрузка", "Пожалуйста, подождите...", false, false);
-
-            loadExchangeRates();
             loadWeather();
             loadExWeather();
+            loadExchangeRates();
+
+
         } else {
             mSwipeRefreshLayout.setRefreshing(false);
+            loadAllDataFromSharedPref();
+            cardView1.setVisibility(VISIBLE);
+            cardView2.setVisibility(VISIBLE);
 
-            Snackbar mSnackbar = Snackbar.make(mCoordinatorLayout, "Не удалось загрузить", Snackbar.LENGTH_INDEFINITE)
-                    .setAction("Повторить", new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            checkConnection();
-                        }
-                    });
-                    mSnackbar.show();
+            Toast toast = Toast.makeText(getApplicationContext(),
+                    "Нет соединения с интернетом", Toast.LENGTH_SHORT);
+            toast.show();
         }
 
     }
+
+    public void saveAllDataToSharedPref() {
+        mSharedPref =  getApplicationContext().getSharedPreferences("MyPref", MODE_PRIVATE);
+        mEditor = mSharedPref.edit();
+        mEditor.putString("nameTown", mNameTown.getText().toString());
+        mEditor.putString("Celcuis", mCelcuis.getText().toString());
+        mEditor.putString("WeatherSys", mWeatherSys.getText().toString());
+        mEditor.putString("Wind", mWind.getText().toString());
+        mEditor.putString("Humidity", mHumidity.getText().toString());
+        mEditor.putString("Date1", mDate1.getText().toString());
+        mEditor.putString("Date2", mDate2.getText().toString());
+        mEditor.putString("Date3", mDate3.getText().toString());
+        mEditor.putString("Celcius1", mCelcius1.getText().toString());
+        mEditor.putString("Celcius2", mCelcius2.getText().toString());
+        mEditor.putString("Celcius3", mCelcius3.getText().toString());
+        mEditor.putString("Discription1", mDiscription1.getText().toString());
+        mEditor.putString("Discription2", mDiscription2.getText().toString());
+        mEditor.putString("Discription3", mDiscription3.getText().toString());
+        mEditor.putString("Usd", mUsd.getText().toString());
+        mEditor.putString("Eur", mEuro.getText().toString());
+        mEditor.putString("difUsd", mDifferenceUsd.getText().toString());
+        mEditor.putString("difEuro", mDifferenceEur.getText().toString());
+        mEditor.putString("prevUsd", mPreviousUsd.getText().toString());
+        mEditor.putString("prevEuro", mPreviousEur.getText().toString());
+        mEditor.putString("lastUpdate", mLastUpdate.getText().toString());
+        mEditor.apply();
+    }
+
+    public void loadAllDataFromSharedPref() {
+        mSharedPref = getSharedPreferences("MyPref", MODE_PRIVATE);
+        String nameTown = mSharedPref.getString("nameTown", ""); mNameTown.setText(nameTown);
+        String Celcuis = mSharedPref.getString("Celcuis", ""); mCelcuis.setText(Celcuis);
+        String WeatherSys = mSharedPref.getString("WeatherSys", ""); mWeatherSys.setText(WeatherSys);
+        String Wind = mSharedPref.getString("Wind", ""); mWind.setText(Wind);
+        String Humidity = mSharedPref.getString("Humidity", ""); mHumidity.setText(Humidity);
+        String Date1 = mSharedPref.getString("Date1", ""); mDate1.setText(Date1);
+        String Date2 = mSharedPref.getString("Date2", ""); mDate2.setText(Date2);
+        String Date3 = mSharedPref.getString("Date3", ""); mDate3.setText(Date3);
+        String Celcius1 = mSharedPref.getString("Celcius1", ""); mCelcius1.setText(Celcius1);
+        String Celcius2 = mSharedPref.getString("Celcius2", ""); mCelcius2.setText(Celcius2);
+        String Celcius3 = mSharedPref.getString("Celcius3", ""); mCelcius3.setText(Celcius3);
+        String Discription1 = mSharedPref.getString("Discription1", ""); mDiscription1.setText(Discription1);
+        String Discription2 = mSharedPref.getString("Discription2", ""); mDiscription2.setText(Discription2);
+        String Discription3 = mSharedPref.getString("Discription3", ""); mDiscription3.setText(Discription3);
+        String Usd = mSharedPref.getString("Usd", ""); mUsd.setText(Usd);
+        String Eur = mSharedPref.getString("Eur", ""); mEuro.setText(Eur);
+        String difUsd = mSharedPref.getString("difUsd", ""); mDifferenceUsd.setText(difUsd);
+        String difEuro = mSharedPref.getString("difEuro", ""); mDifferenceEur.setText(difEuro);
+        String prevUsd = mSharedPref.getString("prevUsd", ""); mPreviousUsd.setText(prevUsd);
+        String prevEuro = mSharedPref.getString("prevEuro", ""); mPreviousEur.setText(prevEuro);
+        String lastUpdate = mSharedPref.getString("lastUpdate", ""); mLastUpdate.setText(lastUpdate);
+    }
+
+
 
 }
 

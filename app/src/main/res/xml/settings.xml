@@ -5,7 +5,7 @@
         android:key="choiseTown"
         android:title="Город"
         android:summary="Нажмите для изменения города"
-        android:defaultValue="moscow"
+        android:defaultValue="Moscow"
         android:dialogTitle="Введите название города"
         android:inputType="textAutoComplete"
         />
