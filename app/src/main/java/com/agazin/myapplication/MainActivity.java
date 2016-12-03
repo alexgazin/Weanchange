@@ -159,7 +159,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 public void onResponse(Call<ExchangeRates> call, Response<ExchangeRates> response) {
                     try {
 
-                        cardView2.setVisibility(VISIBLE);
+
 
                         String usdd = ("$ " + response.body().getValute().getuSD().getValue().toString());
                         mUsd.setText(usdd.substring(0, 7));
@@ -196,6 +196,8 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                             mDifferenceEur.setText((String.valueOf(f).substring(0,4)));
                             mDifferenceEur.setTextColor(Color.RED);
                         }
+
+                        cardView2.setVisibility(VISIBLE);
 
                         // Задаем время последнего апдейта информации
                         DateFormat df = new SimpleDateFormat("dd MMM, HH:mm");
@@ -248,7 +250,6 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                     try {
                         mSwipeRefreshLayout.setRefreshing(false);
                         mLoadDataDialog.dismiss();
-                        cardView1.setVisibility(VISIBLE);
 
 
                         String celcuiss4 = (response.body().getMain().getTemp().toString());
@@ -397,6 +398,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                     String date11 = df.format(Calendar.getInstance().getTime());
                     mLastUpdate.setText("Обновлено: "  + date11);
 
+                    cardView1.setVisibility(VISIBLE);
                     saveAllDataToSharedPref();
                 } catch (Exception e) {
                     Log.d("onResponse", "There is an error");
