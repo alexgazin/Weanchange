@@ -1,7 +1,5 @@
 package com.agazin.myapplication;
 
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -9,36 +7,33 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.CardView;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.agazin.myapplication.CryptoModel.Crypto;
+import com.agazin.myapplication.CryptoModel.Ticker;
 import com.agazin.myapplication.ExWeatherModel.ExWeather;
+import com.agazin.myapplication.ExchangeModel.ExchangeRates;
 import com.agazin.myapplication.Settings.MyPreferenceActivity;
-import com.agazin.myapplication.api.*;
-import com.agazin.myapplication.ExchangeModel.*;
 import com.agazin.myapplication.WeatherModel.Weather;
-
+import com.agazin.myapplication.api.CryptoApi;
+import com.agazin.myapplication.api.ExWeatherApi;
+import com.agazin.myapplication.api.ExchangeRatesApi;
+import com.agazin.myapplication.api.WeatherApi;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -48,7 +43,6 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
-import static java.lang.String.valueOf;
 
 
 public class MainActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
@@ -56,8 +50,10 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     private static String EXCHANGE_URL = "http://www.cbr-xml-daily.ru";
     private static String WEATHER_URL = "http://api.openweathermap.org";
     private static String WEATHER_API = "82eff2c845841c89c837d4e125613d83";
-
-    private TextView mUsd, mEuro, mPreviousUsd, mPreviousEur, mDifferenceUsd, mDifferenceEur;
+    private static String CRYPTO_API = "https://api.cryptonator.com";
+    private static SharedPreferences mSharedPref;
+    private static SharedPreferences.Editor mEditor;
+    private TextView mUsd, mEuro, mPreviousUsd, mPreviousEur, mDifferenceUsd, mDifferenceEur, mBtc;
     private TextView mDate1, mDate2, mDate3, mCelcius1, mCelcius2, mCelcius3, mDiscription1, mDiscription2, mDiscription3;
     private TextView mCelcuis, mNameTown, mWind, mHumidity, mWeatherSys, mLastUpdate;
     private ImageView mIconWeather;
@@ -66,10 +62,6 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private ProgressDialog mLoadDataDialog;
     private CardView cardView1, cardView2;
-    private static SharedPreferences mSharedPref;
-    private static SharedPreferences.Editor mEditor;
-
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,6 +69,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         setContentView(R.layout.activity_main);
         mUsd = (TextView) findViewById(R.id.usd);
         mEuro = (TextView) findViewById(R.id.euro);
+        mBtc = (TextView) findViewById(R.id.btc);
         mCelcuis = (TextView) findViewById(R.id.celcius);
         mIconWeather = (ImageView) findViewById(R.id.iconWeather);
         mNameTown = (TextView) findViewById(R.id.townName);
@@ -120,6 +113,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 loadWeather();
                 loadExchangeRates();
                 loadExWeather();
+                loadCryptoRates();
             }
         }, 1000);
     }
@@ -144,13 +138,12 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     }
 
 
-    // Грузим курс валют
+    // Грузим курс валют (usd, eur)
     public void loadExchangeRates() {
             Retrofit client = new Retrofit.Builder()
                     .baseUrl(EXCHANGE_URL)
                     .addConverterFactory(GsonConverterFactory.create())
                     .build();
-
 
             ExchangeRatesApi service = client.create(ExchangeRatesApi.class);
             Call<ExchangeRates> call = service.getValues();// инфо о валюте
@@ -158,9 +151,6 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 @Override
                 public void onResponse(Call<ExchangeRates> call, Response<ExchangeRates> response) {
                     try {
-
-
-
                         String usdd = ("$ " + response.body().getValute().getuSD().getValue().toString());
                         mUsd.setText(usdd.substring(0, 7));
 
@@ -215,13 +205,46 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 @Override
                 public void onFailure(Call<ExchangeRates> call, Throwable t) {
                     Log.d("Error", t.toString());
-
                     mSwipeRefreshLayout.setRefreshing(false);
-
-
                 }
             });
         }
+
+    // Грузим курс криптовалют (bitcoin)
+    public void loadCryptoRates() {
+        Retrofit client = new Retrofit.Builder()
+                .baseUrl(CRYPTO_API)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        CryptoApi service = client.create(CryptoApi.class);
+        Call<Crypto> call = service.getValues();// инфо о криптовалюте
+        call.enqueue(new Callback<Crypto>() {
+            @Override
+            public void onResponse(Call<Crypto> call, Response<Crypto> response) {
+                try {
+                    String btc = (response.body().getTicker().getPrice());
+                    mBtc.setText(btc);
+
+                    // Задаем время последнего апдейта информации
+//                    DateFormat df = new SimpleDateFormat("dd MMM, HH:mm");
+//                    String date11 = df.format(Calendar.getInstance().getTime());
+//                    mLastUpdate.setText("Обновлено: "  + date11);
+
+                    // сохраняем всю информацию в sp
+                    saveAllDataToSharedPref();
+                } catch (Exception e) {
+                    Log.d("onResponse", "There is an error");
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Crypto> call, Throwable t) {
+                Log.d("Error", t.toString());
+                mSwipeRefreshLayout.setRefreshing(false);
+            }
+        });
+    }
 
     // Грузим основную погоду
     public void loadWeather() {
@@ -439,8 +462,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             loadWeather();
             loadExWeather();
             loadExchangeRates();
-
-
+            loadCryptoRates();
         } else {
             mSwipeRefreshLayout.setRefreshing(false);
             loadAllDataFromSharedPref();
@@ -505,8 +527,5 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         String prevEuro = mSharedPref.getString("prevEuro", ""); mPreviousEur.setText(prevEuro);
         String lastUpdate = mSharedPref.getString("lastUpdate", ""); mLastUpdate.setText(lastUpdate);
     }
-
-
-
 }
 

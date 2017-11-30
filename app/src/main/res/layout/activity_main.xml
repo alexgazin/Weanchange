@@ -410,6 +410,15 @@
 
     </android.support.v7.widget.CardView>
 
+        <TextView
+            android:text="Btc"
+            android:layout_width="125dp"
+            android:layout_height="30dp"
+            android:id="@+id/btc"
+            android:layout_weight="0.15"
+            android:textSize="16sp"
+            android:textColor="@color/cardview_light_background" />
+
 
     </LinearLayout>
 
