@@ -11,7 +11,6 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.CardView;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -20,13 +19,14 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.agazin.myapplication.CryptoModel.Crypto;
-import com.agazin.myapplication.CryptoModel.Ticker;
+import com.agazin.myapplication.BitcoinModel.Crypto;
+import com.agazin.myapplication.EthereumModel.Ethereum;
 import com.agazin.myapplication.ExWeatherModel.ExWeather;
 import com.agazin.myapplication.ExchangeModel.ExchangeRates;
 import com.agazin.myapplication.Settings.MyPreferenceActivity;
 import com.agazin.myapplication.WeatherModel.Weather;
-import com.agazin.myapplication.api.CryptoApi;
+import com.agazin.myapplication.api.BitcoinApi;
+import com.agazin.myapplication.api.EthereumApi;
 import com.agazin.myapplication.api.ExWeatherApi;
 import com.agazin.myapplication.api.ExchangeRatesApi;
 import com.agazin.myapplication.api.WeatherApi;
@@ -45,7 +45,7 @@ import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
 
 
-public class MainActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
+public class MainActivity extends AppCompatActivity {
 
     private static String EXCHANGE_URL = "http://www.cbr-xml-daily.ru";
     private static String WEATHER_URL = "http://api.openweathermap.org";
@@ -53,7 +53,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     private static String CRYPTO_API = "https://api.cryptonator.com";
     private static SharedPreferences mSharedPref;
     private static SharedPreferences.Editor mEditor;
-    private TextView mUsd, mEuro, mPreviousUsd, mPreviousEur, mDifferenceUsd, mDifferenceEur, mBtc;
+    private TextView mUsd, mEuro, mPreviousUsd, mPreviousEur, mDifferenceUsd, mDifferenceEur, mBtc, mEth;
     private TextView mDate1, mDate2, mDate3, mCelcius1, mCelcius2, mCelcius3, mDiscription1, mDiscription2, mDiscription3;
     private TextView mCelcuis, mNameTown, mWind, mHumidity, mWeatherSys, mLastUpdate;
     private ImageView mIconWeather;
@@ -61,43 +61,33 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     private String mChoiseTownFromSettings;
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private ProgressDialog mLoadDataDialog;
-    private CardView cardView1, cardView2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mUsd = (TextView) findViewById(R.id.usd);
-        mEuro = (TextView) findViewById(R.id.euro);
-        mBtc = (TextView) findViewById(R.id.btc);
-        mCelcuis = (TextView) findViewById(R.id.celcius);
-        mIconWeather = (ImageView) findViewById(R.id.iconWeather);
-        mNameTown = (TextView) findViewById(R.id.townName);
-        mWind = (TextView) findViewById(R.id.wind);
-        mHumidity = (TextView) findViewById(R.id.humidity);
-        mWeatherSys = (TextView) findViewById(R.id.weatherSys);
-        mPreviousEur = (TextView) findViewById(R.id.previousEuro);
-        mPreviousUsd = (TextView) findViewById(R.id.previousUsd);
+        mUsd = findViewById(R.id.usd);
+        mEuro = findViewById(R.id.euro);
+        mBtc = findViewById(R.id.btc);
+        mEth = findViewById(R.id.eth);
+        mCelcuis = findViewById(R.id.celcius);
+        mIconWeather = findViewById(R.id.iconWeather);
+        mNameTown = findViewById(R.id.townName);
+        mWind = findViewById(R.id.wind);
+        mHumidity = findViewById(R.id.humidity);
+        mWeatherSys = findViewById(R.id.weatherSys);
         mSp = PreferenceManager.getDefaultSharedPreferences(this);
-        mDifferenceUsd = (TextView) findViewById(R.id.differenceUsd);
-        mDifferenceEur = (TextView) findViewById(R.id.differenceEur);
-        mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh_layout);
-        mSwipeRefreshLayout.setOnRefreshListener(this);
-        cardView1 = (CardView) findViewById(R.id.card_view);
-        cardView2 = (CardView) findViewById(R.id.card_view1);
-        mDate1 = (TextView) findViewById(R.id.date1);
-        mCelcius1 = (TextView) findViewById(R.id.celcius1);
-        mDiscription1 = (TextView) findViewById(R.id.discription1);
-        mDate2 = (TextView) findViewById(R.id.date2);
-        mCelcius2 = (TextView) findViewById(R.id.celcius2);
-        mDiscription2 = (TextView) findViewById(R.id.discription2);
-        mDate3 = (TextView) findViewById(R.id.date3);
-        mCelcius3 = (TextView) findViewById(R.id.celcius3);
-        mDiscription3 = (TextView) findViewById(R.id.discription3);
-        mLastUpdate = (TextView) findViewById(R.id.lastUpdate);
+        mDate1 = findViewById(R.id.date1);
+        mCelcius1 = findViewById(R.id.celcius1);
+        mDiscription1 = findViewById(R.id.discription1);
+        mDate2 = findViewById(R.id.date2);
+        mCelcius2 = findViewById(R.id.celcius2);
+        mDiscription2 = findViewById(R.id.discription2);
+        mDate3 = findViewById(R.id.date3);
+        mCelcius3 = findViewById(R.id.celcius3);
+        mDiscription3 = findViewById(R.id.discription3);
+        mLastUpdate = findViewById(R.id.lastUpdate);
 
-        cardView1.setVisibility(GONE);
-        cardView2.setVisibility(GONE);
         checkConnection();
 
     }
@@ -113,7 +103,8 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 loadWeather();
                 loadExchangeRates();
                 loadExWeather();
-                loadCryptoRates();
+                loadBitcoin();
+                loadEthereum();
             }
         }, 1000);
     }
@@ -152,42 +143,10 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 public void onResponse(Call<ExchangeRates> call, Response<ExchangeRates> response) {
                     try {
                         String usdd = ("$ " + response.body().getValute().getuSD().getValue().toString());
-                        mUsd.setText(usdd.substring(0, 7));
-
-                        String previousUsdd = (response.body().getValute().getuSD().getPrevious().toString());
-                        mPreviousUsd.setText("$ " + previousUsdd.substring(0, 5));
+                        mUsd.setText(usdd.substring(0, 7) + "p");
 
                         String euroo = ("€ " + response.body().getValute().geteUR().getValue().toString());
-                        mEuro.setText(euroo.substring(0, 7));
-
-                        String previousEurr = (response.body().getValute().geteUR().getPrevious().toString());
-                        mPreviousEur.setText("€ " + previousEurr.substring(0, 5));
-
-                        // Делаем разницу с прошлым днем по доллару
-                        float a = response.body().getValute().getuSD().getValue().floatValue();
-                        float b = response.body().getValute().getuSD().getPrevious().floatValue();
-                        float c = a - b;
-                        if (c > 0) {
-                            mDifferenceUsd.setText("+" + (String.valueOf(c).substring(0,4)));
-                            mDifferenceUsd.setTextColor(Color.GREEN);
-                        } else {
-                            mDifferenceUsd.setText((String.valueOf(c).substring(0,4)));
-                            mDifferenceUsd.setTextColor(Color.RED);
-                        }
-
-                        // Делаем разницу с прошлым днем по евро
-                        float d = response.body().getValute().geteUR().getValue().floatValue();
-                        float e = response.body().getValute().geteUR().getPrevious().floatValue();
-                        float f = d - e;
-                        if (f > 0) {
-                            mDifferenceEur.setText("+" + (String.valueOf(f).substring(0,4)));
-                            mDifferenceEur.setTextColor(Color.GREEN);
-                        } else {
-                            mDifferenceEur.setText((String.valueOf(f).substring(0,4)));
-                            mDifferenceEur.setTextColor(Color.RED);
-                        }
-
-                        cardView2.setVisibility(VISIBLE);
+                        mEuro.setText(euroo.substring(0, 7) + "p");
 
                         // Задаем время последнего апдейта информации
                         DateFormat df = new SimpleDateFormat("dd MMM, HH:mm");
@@ -205,25 +164,25 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 @Override
                 public void onFailure(Call<ExchangeRates> call, Throwable t) {
                     Log.d("Error", t.toString());
-                    mSwipeRefreshLayout.setRefreshing(false);
+                    //mSwipeRefreshLayout.setRefreshing(false);
                 }
             });
         }
 
     // Грузим курс криптовалют (bitcoin)
-    public void loadCryptoRates() {
+    public void loadBitcoin() {
         Retrofit client = new Retrofit.Builder()
                 .baseUrl(CRYPTO_API)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
-        CryptoApi service = client.create(CryptoApi.class);
+        BitcoinApi service = client.create(BitcoinApi.class);
         Call<Crypto> call = service.getValues();// инфо о криптовалюте
         call.enqueue(new Callback<Crypto>() {
             @Override
             public void onResponse(Call<Crypto> call, Response<Crypto> response) {
                 try {
                     String btc = (response.body().getTicker().getPrice());
-                    mBtc.setText(btc);
+                    mBtc.setText("bitcoin " + btc.substring(0, btc.indexOf(".")) + "$");
 
                     // Задаем время последнего апдейта информации
 //                    DateFormat df = new SimpleDateFormat("dd MMM, HH:mm");
@@ -241,7 +200,43 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             @Override
             public void onFailure(Call<Crypto> call, Throwable t) {
                 Log.d("Error", t.toString());
-                mSwipeRefreshLayout.setRefreshing(false);
+                //mSwipeRefreshLayout.setRefreshing(false);
+            }
+        });
+    }
+
+    // Грузим курс криптовалют (eth)
+    public void loadEthereum() {
+        Retrofit client = new Retrofit.Builder()
+                .baseUrl(CRYPTO_API)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        EthereumApi service = client.create(EthereumApi.class);
+        Call<Ethereum> call = service.getValues();// инфо о криптовалюте
+        call.enqueue(new Callback<Ethereum>() {
+            @Override
+            public void onResponse(Call<Ethereum> call, Response<Ethereum> response) {
+                try {
+                    String ethereum = (response.body().getTicker().getPrice());
+                    mEth.setText("ethereum " + ethereum.substring(0, ethereum.indexOf(".")) + "$");
+
+                    // Задаем время последнего апдейта информации
+//                    DateFormat df = new SimpleDateFormat("dd MMM, HH:mm");
+//                    String date11 = df.format(Calendar.getInstance().getTime());
+//                    mLastUpdate.setText("Обновлено: "  + date11);
+
+                    // сохраняем всю информацию в sp
+                    saveAllDataToSharedPref();
+                } catch (Exception e) {
+                    Log.d("onResponse", "There is an error");
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Ethereum> call, Throwable t) {
+                Log.d("Error", t.toString());
+                //mSwipeRefreshLayout.setRefreshing(false);
             }
         });
     }
@@ -271,12 +266,12 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 @Override
                 public void onResponse(Call<Weather> call, Response<Weather> response) {
                     try {
-                        mSwipeRefreshLayout.setRefreshing(false);
+                        //mSwipeRefreshLayout.setRefreshing(false);
                         mLoadDataDialog.dismiss();
 
 
                         String celcuiss4 = (response.body().getMain().getTemp().toString());
-                        mCelcuis.setText((celcuiss4.substring(0,3)).replace(".", "") + " °C");
+                        mCelcuis.setText((celcuiss4.substring(0, celcuiss4.indexOf(".")) + "°"));
 
                         mNameTown.setText(response.body().getName());
 
@@ -348,7 +343,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 public void onFailure(Call<Weather> call, Throwable t) {
                     Log.d("Error", t.toString());
 
-                    mSwipeRefreshLayout.setRefreshing(false);
+                    //mSwipeRefreshLayout.setRefreshing(false);
 
                 }
             });
@@ -379,16 +374,16 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             @Override
             public void onResponse(Call<ExWeather> call, Response<ExWeather> response) {
                 try {
-                    mSwipeRefreshLayout.setRefreshing(false);
+                    //mSwipeRefreshLayout.setRefreshing(false);
 
                     // грузим первую погоду на следующий день
                     String date = (response.body().getList().get(5).getDtTxt().toString());
                     String date_ = (date.substring(5,7));
                     String date__ = (date.substring(8,10));
-                    mDate1.setText((date__ + "/" + date_ + ":"));
+                    mDate1.setText((date__ + "/" + date_));
 
                     String celcuiss = (response.body().getList().get(5).getMain().getTemp().toString());
-                    mCelcius1.setText((celcuiss.substring(0,3)).replace(".", "") + " °C");
+                    mCelcius1.setText((celcuiss.substring(0, celcuiss.indexOf(".")) + "°"));
 
                     mDiscription1.setText(response.body().getList().get(5).getWeather().get(0).getDescription().toString());
                     ////////////
@@ -397,22 +392,22 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                     String date1 = (response.body().getList().get(13).getDtTxt().toString());
                     String date___ = (date1.substring(5,7));
                     String date____ = (date1.substring(8,10));
-                    mDate2.setText((date____ + "/" + date___ + ":"));
+                    mDate2.setText((date____ + "/" + date___));
 
                     String celcuiss1 = (response.body().getList().get(13).getMain().getTemp().toString());
-                    mCelcius2.setText((celcuiss1.substring(0,3)).replace(".", "") + " °C");
+                    mCelcius2.setText((celcuiss1.substring(0, celcuiss1.indexOf(".")) + "°"));
 
                     mDiscription2.setText(response.body().getList().get(13).getWeather().get(0).getDescription().toString());
                     ////////////
 
-                    // грузим вторую погоду через два дня
+                    // грузим третью погоду через два дня
                     String date3 = (response.body().getList().get(21).getDtTxt().toString());
                     String date_____ = (date3.substring(5,7));
                     String date______ = (date3.substring(8,10));
-                    mDate3.setText((date______ + "/" + date_____ + ":"));
+                    mDate3.setText((date______ + "/" + date_____));
 
                     String celcuiss2 = (response.body().getList().get(21).getMain().getTemp().toString());
-                    mCelcius3.setText((celcuiss2.substring(0,3)).replace(".", "") + " °C");
+                    mCelcius3.setText((celcuiss2.substring(0, celcuiss2.indexOf(".")) + "°"));
 
                     mDiscription3.setText(response.body().getList().get(21).getWeather().get(0).getDescription().toString());
 
@@ -421,7 +416,6 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                     String date11 = df.format(Calendar.getInstance().getTime());
                     mLastUpdate.setText("Обновлено: "  + date11);
 
-                    cardView1.setVisibility(VISIBLE);
                     saveAllDataToSharedPref();
                 } catch (Exception e) {
                     Log.d("onResponse", "There is an error");
@@ -433,7 +427,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             public void onFailure(Call<ExWeather> call, Throwable t) {
                 Log.d("Error", t.toString());
 
-                mSwipeRefreshLayout.setRefreshing(false);
+                //mSwipeRefreshLayout.setRefreshing(false);
 
             }
         });
@@ -446,14 +440,10 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
 
     protected boolean isOnline() {
-
         ConnectivityManager cm = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+        assert cm != null;
         NetworkInfo netInfo = cm.getActiveNetworkInfo();
-        if (netInfo != null && netInfo.isConnectedOrConnecting()) {
-            return true;
-        } else {
-            return false;
-        }
+        return netInfo != null && netInfo.isConnectedOrConnecting();
     }
 
     public void checkConnection(){
@@ -462,12 +452,11 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             loadWeather();
             loadExWeather();
             loadExchangeRates();
-            loadCryptoRates();
+            loadBitcoin();
+            loadEthereum();
         } else {
-            mSwipeRefreshLayout.setRefreshing(false);
+            //mSwipeRefreshLayout.setRefreshing(false);
             loadAllDataFromSharedPref();
-            cardView1.setVisibility(VISIBLE);
-            cardView2.setVisibility(VISIBLE);
 
             Toast toast = Toast.makeText(getApplicationContext(),
                     "Нет соединения с интернетом", Toast.LENGTH_SHORT);
