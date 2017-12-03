@@ -53,13 +53,12 @@ public class MainActivity extends AppCompatActivity {
     private static String CRYPTO_API = "https://api.cryptonator.com";
     private static SharedPreferences mSharedPref;
     private static SharedPreferences.Editor mEditor;
-    private TextView mUsd, mEuro, mPreviousUsd, mPreviousEur, mDifferenceUsd, mDifferenceEur, mBtc, mEth;
+    private TextView mUsd, mEuro, mBtc, mEth;
     private TextView mDate1, mDate2, mDate3, mCelcius1, mCelcius2, mCelcius3, mDiscription1, mDiscription2, mDiscription3;
     private TextView mCelcuis, mNameTown, mWind, mHumidity, mWeatherSys, mLastUpdate;
     private ImageView mIconWeather;
     private SharedPreferences mSp;
     private String mChoiseTownFromSettings;
-    private SwipeRefreshLayout mSwipeRefreshLayout;
     private ProgressDialog mLoadDataDialog;
 
     @Override
@@ -92,23 +91,6 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void onRefresh() {
-        checkConnection();
-        // начинаем показывать прогресс
-        mSwipeRefreshLayout.setRefreshing(true);
-        // ждем 3 секунды и прячем прогресс
-        mSwipeRefreshLayout.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                loadWeather();
-                loadExchangeRates();
-                loadExWeather();
-                loadBitcoin();
-                loadEthereum();
-            }
-        }, 1000);
-    }
-
     @Override
     protected void onResume() {
         super.onResume();
@@ -128,46 +110,51 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
+    public void refreshStatus(MenuItem item) {
+
+        checkConnection();
+
+    }
 
     // Грузим курс валют (usd, eur)
     public void loadExchangeRates() {
-            Retrofit client = new Retrofit.Builder()
-                    .baseUrl(EXCHANGE_URL)
-                    .addConverterFactory(GsonConverterFactory.create())
-                    .build();
+        Retrofit client = new Retrofit.Builder()
+                .baseUrl(EXCHANGE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
 
-            ExchangeRatesApi service = client.create(ExchangeRatesApi.class);
-            Call<ExchangeRates> call = service.getValues();// инфо о валюте
-            call.enqueue(new Callback<ExchangeRates>() {
-                @Override
-                public void onResponse(Call<ExchangeRates> call, Response<ExchangeRates> response) {
-                    try {
-                        String usdd = ("$ " + response.body().getValute().getuSD().getValue().toString());
-                        mUsd.setText(usdd.substring(0, 7) + "p");
+        ExchangeRatesApi service = client.create(ExchangeRatesApi.class);
+        Call<ExchangeRates> call = service.getValues();// инфо о валюте
+        call.enqueue(new Callback<ExchangeRates>() {
+            @Override
+            public void onResponse(Call<ExchangeRates> call, Response<ExchangeRates> response) {
+                try {
+                    String usdd = ("$ " + response.body().getValute().getuSD().getValue().toString());
+                    mUsd.setText(usdd.substring(0, 7) + "p");
 
-                        String euroo = ("€ " + response.body().getValute().geteUR().getValue().toString());
-                        mEuro.setText(euroo.substring(0, 7) + "p");
+                    String euroo = ("€ " + response.body().getValute().geteUR().getValue().toString());
+                    mEuro.setText(euroo.substring(0, 7) + "p");
 
-                        // Задаем время последнего апдейта информации
-                        DateFormat df = new SimpleDateFormat("dd MMM, HH:mm");
-                        String date11 = df.format(Calendar.getInstance().getTime());
-                        mLastUpdate.setText("Обновлено: "  + date11);
+                    // Задаем время последнего апдейта информации
+                    DateFormat df = new SimpleDateFormat("dd MMM, HH:mm");
+                    String date11 = df.format(Calendar.getInstance().getTime());
+                    mLastUpdate.setText("Обновлено: " + date11);
 
-                        // сохраняем всю информацию в sp
-                       saveAllDataToSharedPref();
-                    } catch (Exception e) {
-                        Log.d("onResponse", "There is an error");
-                        e.printStackTrace();
-                    }
+                    // сохраняем всю информацию в sp
+                    saveAllDataToSharedPref();
+                } catch (Exception e) {
+                    Log.d("onResponse", "There is an error");
+                    e.printStackTrace();
                 }
+            }
 
-                @Override
-                public void onFailure(Call<ExchangeRates> call, Throwable t) {
-                    Log.d("Error", t.toString());
-                    //mSwipeRefreshLayout.setRefreshing(false);
-                }
-            });
-        }
+            @Override
+            public void onFailure(Call<ExchangeRates> call, Throwable t) {
+                Log.d("Error", t.toString());
+                //mSwipeRefreshLayout.setRefreshing(false);
+            }
+        });
+    }
 
     // Грузим курс криптовалют (bitcoin)
     public void loadBitcoin() {
@@ -250,104 +237,104 @@ public class MainActivity extends AppCompatActivity {
             mChoiseTownFromSettings = mSp.getString("choiseTown", "");
         }
 
-            Retrofit client = new Retrofit.Builder()
-                    .baseUrl(WEATHER_URL)
-                    .addConverterFactory(GsonConverterFactory.create())
-                    .build();
+        Retrofit client = new Retrofit.Builder()
+                .baseUrl(WEATHER_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
 
-            WeatherApi service = client.create(WeatherApi.class);
-            Call<Weather> call = service.getValues(
-                    WEATHER_API,
-                    mChoiseTownFromSettings,
-                    "metric",
-                    "ru");
+        WeatherApi service = client.create(WeatherApi.class);
+        Call<Weather> call = service.getValues(
+                WEATHER_API,
+                mChoiseTownFromSettings,
+                "metric",
+                "ru");
 
-            call.enqueue(new Callback<Weather>() {
-                @Override
-                public void onResponse(Call<Weather> call, Response<Weather> response) {
-                    try {
-                        //mSwipeRefreshLayout.setRefreshing(false);
-                        mLoadDataDialog.dismiss();
-
-
-                        String celcuiss4 = (response.body().getMain().getTemp().toString());
-                        mCelcuis.setText((celcuiss4.substring(0, celcuiss4.indexOf(".")) + "°"));
-
-                        mNameTown.setText(response.body().getName());
-
-                        String windd = (response.body().getWind().getSpeed().toString());
-                        mWind.setText("Ветер: " + (windd.substring(0,2)).replace(".", "")  + " м/с");
-
-                        mHumidity.setText("Влажность: " + response.body().getMain().getHumidity() + "%");
-                        mWeatherSys.setText(response.body().getWeather().get(0).getDescription());
-
-                        // Делаем картинку погоды (день)
-                        if (response.body().getWeather().get(0).getIcon().equals("01d")) {
-                            mIconWeather.setImageResource(R.drawable.sun);
-                        } else if (response.body().getWeather().get(0).getIcon().equals("02d")) {
-                            mIconWeather.setImageResource(R.drawable.fewcloud);
-                        } else if (response.body().getWeather().get(0).getIcon().equals("03d")) {
-                            mIconWeather.setImageResource(R.drawable.cloud);
-                        } else if (response.body().getWeather().get(0).getIcon().equals("04d")) {
-                            mIconWeather.setImageResource(R.drawable.cloud);
-                        } else if (response.body().getWeather().get(0).getIcon().equals("09d")) {
-                            mIconWeather.setImageResource(R.drawable.rain);
-                        } else if (response.body().getWeather().get(0).getIcon().equals("10d")) {
-                            mIconWeather.setImageResource(R.drawable.rain);
-                        } else if (response.body().getWeather().get(0).getIcon().equals("11d")) {
-                            mIconWeather.setImageResource(R.drawable.storm);
-                        } else if (response.body().getWeather().get(0).getIcon().equals("13d")) {
-                            mIconWeather.setImageResource(R.drawable.snowflake);
-                        } else if (response.body().getWeather().get(0).getIcon().equals("50d")) {
-                            mIconWeather.setImageResource(R.drawable.haze);
-                        } else {
-                            mIconWeather.setImageResource(R.drawable.sun);
-                        }
-
-                        // Делаем картинку погоды (ночь)
-                        if (response.body().getWeather().get(0).getIcon().equals("01n")) {
-                            mIconWeather.setImageResource(R.drawable.sun);
-                        } else if (response.body().getWeather().get(0).getIcon().equals("02n")) {
-                            mIconWeather.setImageResource(R.drawable.fewcloud);
-                        } else if (response.body().getWeather().get(0).getIcon().equals("03n")) {
-                            mIconWeather.setImageResource(R.drawable.cloud);
-                        } else if (response.body().getWeather().get(0).getIcon().equals("04n")) {
-                            mIconWeather.setImageResource(R.drawable.cloud);
-                        } else if (response.body().getWeather().get(0).getIcon().equals("09n")) {
-                            mIconWeather.setImageResource(R.drawable.rain);
-                        } else if (response.body().getWeather().get(0).getIcon().equals("10n")) {
-                            mIconWeather.setImageResource(R.drawable.rain);
-                        } else if (response.body().getWeather().get(0).getIcon().equals("11n")) {
-                            mIconWeather.setImageResource(R.drawable.storm);
-                        } else if (response.body().getWeather().get(0).getIcon().equals("13n")) {
-                            mIconWeather.setImageResource(R.drawable.snowflake);
-                        } else if (response.body().getWeather().get(0).getIcon().equals("50n")) {
-                            mIconWeather.setImageResource(R.drawable.haze);
-                        } else {
-                            mIconWeather.setImageResource(R.drawable.sun);
-                        }
-
-                        // Задаем время последнего апдейта информации
-                        DateFormat df = new SimpleDateFormat("dd MMM, HH:mm");
-                        String date11 = df.format(Calendar.getInstance().getTime());
-                        mLastUpdate.setText("Обновлено: "  + date11);
-
-                        saveAllDataToSharedPref();
-                    } catch (Exception e) {
-                        Log.d("onResponse", "There is an error");
-                        e.printStackTrace();
-                    }
-                }
-
-                @Override
-                public void onFailure(Call<Weather> call, Throwable t) {
-                    Log.d("Error", t.toString());
-
+        call.enqueue(new Callback<Weather>() {
+            @Override
+            public void onResponse(Call<Weather> call, Response<Weather> response) {
+                try {
                     //mSwipeRefreshLayout.setRefreshing(false);
+                    mLoadDataDialog.dismiss();
 
+
+                    String celcuiss4 = (response.body().getMain().getTemp().toString());
+                    mCelcuis.setText((celcuiss4.substring(0, celcuiss4.indexOf(".")) + "°"));
+
+                    mNameTown.setText(response.body().getName());
+
+                    String windd = (response.body().getWind().getSpeed().toString());
+                    mWind.setText("Ветер: " + (windd.substring(0, 2)).replace(".", "") + " м/с");
+
+                    mHumidity.setText("Влажность: " + response.body().getMain().getHumidity() + "%");
+                    mWeatherSys.setText(response.body().getWeather().get(0).getDescription());
+
+                    // Делаем картинку погоды (день)
+                    if (response.body().getWeather().get(0).getIcon().equals("01d")) {
+                        mIconWeather.setImageResource(R.drawable.sun);
+                    } else if (response.body().getWeather().get(0).getIcon().equals("02d")) {
+                        mIconWeather.setImageResource(R.drawable.fewcloud);
+                    } else if (response.body().getWeather().get(0).getIcon().equals("03d")) {
+                        mIconWeather.setImageResource(R.drawable.cloud);
+                    } else if (response.body().getWeather().get(0).getIcon().equals("04d")) {
+                        mIconWeather.setImageResource(R.drawable.cloud);
+                    } else if (response.body().getWeather().get(0).getIcon().equals("09d")) {
+                        mIconWeather.setImageResource(R.drawable.rain);
+                    } else if (response.body().getWeather().get(0).getIcon().equals("10d")) {
+                        mIconWeather.setImageResource(R.drawable.rain);
+                    } else if (response.body().getWeather().get(0).getIcon().equals("11d")) {
+                        mIconWeather.setImageResource(R.drawable.storm);
+                    } else if (response.body().getWeather().get(0).getIcon().equals("13d")) {
+                        mIconWeather.setImageResource(R.drawable.snowflake);
+                    } else if (response.body().getWeather().get(0).getIcon().equals("50d")) {
+                        mIconWeather.setImageResource(R.drawable.haze);
+                    } else {
+                        mIconWeather.setImageResource(R.drawable.sun);
+                    }
+
+                    // Делаем картинку погоды (ночь)
+                    if (response.body().getWeather().get(0).getIcon().equals("01n")) {
+                        mIconWeather.setImageResource(R.drawable.sun);
+                    } else if (response.body().getWeather().get(0).getIcon().equals("02n")) {
+                        mIconWeather.setImageResource(R.drawable.fewcloud);
+                    } else if (response.body().getWeather().get(0).getIcon().equals("03n")) {
+                        mIconWeather.setImageResource(R.drawable.cloud);
+                    } else if (response.body().getWeather().get(0).getIcon().equals("04n")) {
+                        mIconWeather.setImageResource(R.drawable.cloud);
+                    } else if (response.body().getWeather().get(0).getIcon().equals("09n")) {
+                        mIconWeather.setImageResource(R.drawable.rain);
+                    } else if (response.body().getWeather().get(0).getIcon().equals("10n")) {
+                        mIconWeather.setImageResource(R.drawable.rain);
+                    } else if (response.body().getWeather().get(0).getIcon().equals("11n")) {
+                        mIconWeather.setImageResource(R.drawable.storm);
+                    } else if (response.body().getWeather().get(0).getIcon().equals("13n")) {
+                        mIconWeather.setImageResource(R.drawable.snowflake);
+                    } else if (response.body().getWeather().get(0).getIcon().equals("50n")) {
+                        mIconWeather.setImageResource(R.drawable.haze);
+                    } else {
+                        mIconWeather.setImageResource(R.drawable.sun);
+                    }
+
+                    // Задаем время последнего апдейта информации
+                    DateFormat df = new SimpleDateFormat("dd MMM, HH:mm");
+                    String date11 = df.format(Calendar.getInstance().getTime());
+                    mLastUpdate.setText("Обновлено: " + date11);
+
+                    saveAllDataToSharedPref();
+                } catch (Exception e) {
+                    Log.d("onResponse", "There is an error");
+                    e.printStackTrace();
                 }
-            });
-        }
+            }
+
+            @Override
+            public void onFailure(Call<Weather> call, Throwable t) {
+                Log.d("Error", t.toString());
+
+                //mSwipeRefreshLayout.setRefreshing(false);
+
+            }
+        });
+    }
 
     // Грузим расширенную погоду
     public void loadExWeather() {
@@ -378,8 +365,8 @@ public class MainActivity extends AppCompatActivity {
 
                     // грузим первую погоду на следующий день
                     String date = (response.body().getList().get(5).getDtTxt().toString());
-                    String date_ = (date.substring(5,7));
-                    String date__ = (date.substring(8,10));
+                    String date_ = (date.substring(5, 7));
+                    String date__ = (date.substring(8, 10));
                     mDate1.setText((date__ + "/" + date_));
 
                     String celcuiss = (response.body().getList().get(5).getMain().getTemp().toString());
@@ -390,8 +377,8 @@ public class MainActivity extends AppCompatActivity {
 
                     // грузим вторую погоду через день
                     String date1 = (response.body().getList().get(13).getDtTxt().toString());
-                    String date___ = (date1.substring(5,7));
-                    String date____ = (date1.substring(8,10));
+                    String date___ = (date1.substring(5, 7));
+                    String date____ = (date1.substring(8, 10));
                     mDate2.setText((date____ + "/" + date___));
 
                     String celcuiss1 = (response.body().getList().get(13).getMain().getTemp().toString());
@@ -402,8 +389,8 @@ public class MainActivity extends AppCompatActivity {
 
                     // грузим третью погоду через два дня
                     String date3 = (response.body().getList().get(21).getDtTxt().toString());
-                    String date_____ = (date3.substring(5,7));
-                    String date______ = (date3.substring(8,10));
+                    String date_____ = (date3.substring(5, 7));
+                    String date______ = (date3.substring(8, 10));
                     mDate3.setText((date______ + "/" + date_____));
 
                     String celcuiss2 = (response.body().getList().get(21).getMain().getTemp().toString());
@@ -414,7 +401,7 @@ public class MainActivity extends AppCompatActivity {
                     // Задаем время последнего апдейта информации
                     DateFormat df = new SimpleDateFormat("dd MMM, HH:mm");
                     String date11 = df.format(Calendar.getInstance().getTime());
-                    mLastUpdate.setText("Обновлено: "  + date11);
+                    mLastUpdate.setText("Обновлено: " + date11);
 
                     saveAllDataToSharedPref();
                 } catch (Exception e) {
@@ -440,22 +427,22 @@ public class MainActivity extends AppCompatActivity {
 
 
     protected boolean isOnline() {
-        ConnectivityManager cm = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         assert cm != null;
         NetworkInfo netInfo = cm.getActiveNetworkInfo();
         return netInfo != null && netInfo.isConnectedOrConnecting();
     }
 
-    public void checkConnection(){
+    public void checkConnection() {
         if (isOnline()) {
-            mLoadDataDialog = ProgressDialog.show(this, "Загрузка", "Пожалуйста, подождите...", false, false);
+            mLoadDataDialog = ProgressDialog.show(this, "Загрузка", "Пожалуйста, подождите...", false, true);
             loadWeather();
             loadExWeather();
             loadExchangeRates();
             loadBitcoin();
             loadEthereum();
         } else {
-            //mSwipeRefreshLayout.setRefreshing(false);
+            mLoadDataDialog.cancel();
             loadAllDataFromSharedPref();
 
             Toast toast = Toast.makeText(getApplicationContext(),
@@ -466,7 +453,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void saveAllDataToSharedPref() {
-        mSharedPref =  getApplicationContext().getSharedPreferences("MyPref", MODE_PRIVATE);
+        mSharedPref = getApplicationContext().getSharedPreferences("MyPref", MODE_PRIVATE);
         mEditor = mSharedPref.edit();
         mEditor.putString("nameTown", mNameTown.getText().toString());
         mEditor.putString("Celcuis", mCelcuis.getText().toString());
@@ -484,37 +471,47 @@ public class MainActivity extends AppCompatActivity {
         mEditor.putString("Discription3", mDiscription3.getText().toString());
         mEditor.putString("Usd", mUsd.getText().toString());
         mEditor.putString("Eur", mEuro.getText().toString());
-        mEditor.putString("difUsd", mDifferenceUsd.getText().toString());
-        mEditor.putString("difEuro", mDifferenceEur.getText().toString());
-        mEditor.putString("prevUsd", mPreviousUsd.getText().toString());
-        mEditor.putString("prevEuro", mPreviousEur.getText().toString());
         mEditor.putString("lastUpdate", mLastUpdate.getText().toString());
         mEditor.apply();
     }
 
     public void loadAllDataFromSharedPref() {
         mSharedPref = getSharedPreferences("MyPref", MODE_PRIVATE);
-        String nameTown = mSharedPref.getString("nameTown", ""); mNameTown.setText(nameTown);
-        String Celcuis = mSharedPref.getString("Celcuis", ""); mCelcuis.setText(Celcuis);
-        String WeatherSys = mSharedPref.getString("WeatherSys", ""); mWeatherSys.setText(WeatherSys);
-        String Wind = mSharedPref.getString("Wind", ""); mWind.setText(Wind);
-        String Humidity = mSharedPref.getString("Humidity", ""); mHumidity.setText(Humidity);
-        String Date1 = mSharedPref.getString("Date1", ""); mDate1.setText(Date1);
-        String Date2 = mSharedPref.getString("Date2", ""); mDate2.setText(Date2);
-        String Date3 = mSharedPref.getString("Date3", ""); mDate3.setText(Date3);
-        String Celcius1 = mSharedPref.getString("Celcius1", ""); mCelcius1.setText(Celcius1);
-        String Celcius2 = mSharedPref.getString("Celcius2", ""); mCelcius2.setText(Celcius2);
-        String Celcius3 = mSharedPref.getString("Celcius3", ""); mCelcius3.setText(Celcius3);
-        String Discription1 = mSharedPref.getString("Discription1", ""); mDiscription1.setText(Discription1);
-        String Discription2 = mSharedPref.getString("Discription2", ""); mDiscription2.setText(Discription2);
-        String Discription3 = mSharedPref.getString("Discription3", ""); mDiscription3.setText(Discription3);
-        String Usd = mSharedPref.getString("Usd", ""); mUsd.setText(Usd);
-        String Eur = mSharedPref.getString("Eur", ""); mEuro.setText(Eur);
-        String difUsd = mSharedPref.getString("difUsd", ""); mDifferenceUsd.setText(difUsd);
-        String difEuro = mSharedPref.getString("difEuro", ""); mDifferenceEur.setText(difEuro);
-        String prevUsd = mSharedPref.getString("prevUsd", ""); mPreviousUsd.setText(prevUsd);
-        String prevEuro = mSharedPref.getString("prevEuro", ""); mPreviousEur.setText(prevEuro);
-        String lastUpdate = mSharedPref.getString("lastUpdate", ""); mLastUpdate.setText(lastUpdate);
+        String nameTown = mSharedPref.getString("nameTown", "");
+        mNameTown.setText(nameTown);
+        String Celcuis = mSharedPref.getString("Celcuis", "");
+        mCelcuis.setText(Celcuis);
+        String WeatherSys = mSharedPref.getString("WeatherSys", "");
+        mWeatherSys.setText(WeatherSys);
+        String Wind = mSharedPref.getString("Wind", "");
+        mWind.setText(Wind);
+        String Humidity = mSharedPref.getString("Humidity", "");
+        mHumidity.setText(Humidity);
+        String Date1 = mSharedPref.getString("Date1", "");
+        mDate1.setText(Date1);
+        String Date2 = mSharedPref.getString("Date2", "");
+        mDate2.setText(Date2);
+        String Date3 = mSharedPref.getString("Date3", "");
+        mDate3.setText(Date3);
+        String Celcius1 = mSharedPref.getString("Celcius1", "");
+        mCelcius1.setText(Celcius1);
+        String Celcius2 = mSharedPref.getString("Celcius2", "");
+        mCelcius2.setText(Celcius2);
+        String Celcius3 = mSharedPref.getString("Celcius3", "");
+        mCelcius3.setText(Celcius3);
+        String Discription1 = mSharedPref.getString("Discription1", "");
+        mDiscription1.setText(Discription1);
+        String Discription2 = mSharedPref.getString("Discription2", "");
+        mDiscription2.setText(Discription2);
+        String Discription3 = mSharedPref.getString("Discription3", "");
+        mDiscription3.setText(Discription3);
+        String Usd = mSharedPref.getString("Usd", "");
+        mUsd.setText(Usd);
+        String Eur = mSharedPref.getString("Eur", "");
+        mEuro.setText(Eur);
+        String difUsd = mSharedPref.getString("difUsd", "");
+        String lastUpdate = mSharedPref.getString("lastUpdate", "");
+        mLastUpdate.setText(lastUpdate);
     }
 }
 

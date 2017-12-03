@@ -76,7 +76,6 @@
         android:id="@+id/tableLayout1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="50dp"
         android:paddingTop="310dp"
         android:shrinkColumns="*"
         android:stretchColumns="*">
@@ -89,6 +88,7 @@
                 android:id="@+id/date1"
                 android:layout_width="150dp"
                 android:layout_height="40dp"
+                android:layout_gravity="center_horizontal"
                 android:text="Дата1"
                 android:textColor="#FFFF"
                 android:textSize="16sp" />
@@ -97,6 +97,7 @@
                 android:id="@+id/date2"
                 android:layout_width="150dp"
                 android:layout_height="40dp"
+                android:layout_gravity="center_horizontal"
                 android:text="Дата2"
                 android:textColor="#FFFF"
                 android:textSize="16sp" />
@@ -105,6 +106,7 @@
                 android:id="@+id/date3"
                 android:layout_width="150dp"
                 android:layout_height="40dp"
+                android:layout_gravity="center_horizontal"
                 android:text="Дата3"
                 android:textColor="#FFFF"
                 android:textSize="16sp" />
@@ -112,35 +114,63 @@
 
         <TableRow
             android:layout_width="wrap_content"
-            android:layout_height="50dp">
+            android:layout_height="10dp">
 
             <TextView
                 android:id="@+id/celcius1"
-                android:layout_width="21dp"
-                android:layout_height="40dp"
-                android:layout_marginEnd="66dp"
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:layout_gravity="center_horizontal"
                 android:text="Погода1"
                 android:textColor="#FFFF"
-                android:textSize="16sp"
+                android:textSize="18sp"
                 android:textStyle="normal" />
 
             <TextView
                 android:id="@+id/celcius2"
-                android:layout_width="21dp"
+                android:layout_width="wrap_content"
                 android:layout_height="30dp"
+                android:layout_gravity="center_horizontal"
                 android:text="Погода2"
                 android:textColor="#FFFF"
-                android:textSize="16sp"
+                android:textSize="18sp"
                 android:textStyle="normal" />
 
             <TextView
                 android:id="@+id/celcius3"
-                android:layout_width="21dp"
+                android:layout_width="wrap_content"
                 android:layout_height="30dp"
+                android:layout_gravity="center_horizontal"
                 android:text="Погода3"
                 android:textColor="#FFFF"
-                android:textSize="16sp"
+                android:textSize="18sp"
                 android:textStyle="normal" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="wrap_content"
+            android:layout_height="50dp">
+
+            <ImageView
+                android:id="@+id/iconWeather1"
+                android:layout_width="5dp"
+                android:layout_height="match_parent"
+                android:layout_gravity="center_horizontal"
+                android:src="@drawable/sun" />
+
+            <ImageView
+                android:id="@+id/iconWeather2"
+                android:layout_width="5dp"
+                android:layout_height="match_parent"
+                android:layout_gravity="center_horizontal"
+                android:src="@drawable/sun" />
+
+            <ImageView
+                android:id="@+id/iconWeather3"
+                android:layout_width="5dp"
+                android:layout_height="40dp"
+                android:layout_gravity="center_horizontal"
+                android:src="@drawable/sun" />
         </TableRow>
 
         <TableRow
@@ -149,39 +179,47 @@
 
             <TextView
                 android:id="@+id/discription1"
-                android:layout_width="125dp"
-                android:layout_height="40dp"
+                android:layout_width="150dp"
+                android:layout_height="match_parent"
+                android:layout_gravity="center_horizontal"
+                android:paddingLeft="40dp"
                 android:text="Описание1"
                 android:textColor="#FFFF"
-                android:textSize="16sp" />
+                android:textSize="14sp" />
 
             <TextView
                 android:id="@+id/discription2"
-                android:layout_width="125dp"
-                android:layout_height="40dp"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="center_horizontal"
+                android:paddingLeft="40dp"
                 android:text="Описание2"
                 android:textColor="#FFFF"
-                android:textSize="16sp" />
+                android:textSize="14sp" />
 
             <TextView
                 android:id="@+id/discription3"
-                android:layout_width="125dp"
-                android:layout_height="40dp"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="center_horizontal"
+                android:paddingLeft="40dp"
                 android:text="Описание3"
                 android:textColor="#FFFF"
-                android:textSize="16sp" />
+                android:textSize="14sp" />
         </TableRow>
 
 
         <TableRow
             android:layout_width="wrap_content"
             android:layout_height="50dp"
-            android:paddingLeft="50dp">
+            android:paddingLeft="50dp"
+            android:paddingTop="50dp">
 
             <TextView
                 android:id="@+id/usd"
-                android:layout_width="47dp"
-                android:layout_height="30dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
                 android:layout_marginTop="43dp"
                 android:text="Бакс"
                 android:textColor="#FFFF"
@@ -189,8 +227,9 @@
 
             <TextView
                 android:id="@+id/euro"
-                android:layout_width="37dp"
-                android:layout_height="30dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
                 android:layout_marginTop="43dp"
                 android:text="Евро"
                 android:textColor="#FFFF"
@@ -206,18 +245,20 @@
 
             <TextView
                 android:id="@+id/btc"
-                android:layout_width="125dp"
-                android:layout_height="30dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="34dp"
+                android:layout_gravity="center_horizontal"
                 android:text="Btc"
                 android:textColor="#FFFF"
                 android:textSize="16sp" />
 
             <TextView
                 android:id="@+id/eth"
-                android:layout_width="125dp"
-                android:layout_height="30dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="34dp"
+                android:layout_gravity="center_horizontal"
                 android:text="Eth"
                 android:textColor="#FFFF"
                 android:textSize="16sp" />

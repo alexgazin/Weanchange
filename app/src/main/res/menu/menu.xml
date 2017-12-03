@@ -1,8 +1,14 @@
-<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_favorite"
+        android:icon="@android:drawable/ic_popup_sync"
+        app:showAsAction="ifRoom"
+        android:title="@string/refresh"
+        android:onClick="refreshStatus"/>
+
     <item
         android:id="@+id/action_settings"
         android:title="@string/action_settings"
         android:onClick="showSettings"/>
-
-
 </menu>
