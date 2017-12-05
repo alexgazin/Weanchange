@@ -30,6 +30,8 @@ import com.agazin.myapplication.api.EthereumApi;
 import com.agazin.myapplication.api.ExWeatherApi;
 import com.agazin.myapplication.api.ExchangeRatesApi;
 import com.agazin.myapplication.api.WeatherApi;
+import com.agazin.myapplication.api.WeatherbitApi;
+import com.agazin.myapplication.weatherbitModel.Weatherbit;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -50,11 +52,14 @@ public class MainActivity extends AppCompatActivity {
     private static String EXCHANGE_URL = "http://www.cbr-xml-daily.ru";
     private static String WEATHER_URL = "http://api.openweathermap.org";
     private static String WEATHER_API = "82eff2c845841c89c837d4e125613d83";
+    private static String WEATHERBIT_URL = "https://api.weatherbit.io";
+    private static String WEATHERBIT_API = "d1d9fdf32c064be88d66e98ab9777354";
     private static String CRYPTO_API = "https://api.cryptonator.com";
     private static SharedPreferences mSharedPref;
     private static SharedPreferences.Editor mEditor;
     private TextView mUsd, mEuro, mBtc, mEth;
-    private TextView mDate1, mDate2, mDate3, mCelcius1, mCelcius2, mCelcius3, mDiscription1, mDiscription2, mDiscription3;
+    private TextView mDate1, mDate2, mDate3, mDate4, mDate5, mCelcius1, mCelcius2, mCelcius3, mCelcius4,
+            mCelcius5, mApparentTemp, mDiscription1, mDiscription2, mDiscription3, mDiscription4, mDiscription5;
     private TextView mCelcuis, mNameTown, mWind, mHumidity, mWeatherSys, mLastUpdate;
     private ImageView mIconWeather;
     private SharedPreferences mSp;
@@ -85,6 +90,13 @@ public class MainActivity extends AppCompatActivity {
         mDate3 = findViewById(R.id.date3);
         mCelcius3 = findViewById(R.id.celcius3);
         mDiscription3 = findViewById(R.id.discription3);
+        mDate4 = findViewById(R.id.date4);
+        mCelcius4 = findViewById(R.id.celcius4);
+        mDiscription4 = findViewById(R.id.discription4);
+        mDate5 = findViewById(R.id.date5);
+        mCelcius5 = findViewById(R.id.celcius5);
+        mDiscription5 = findViewById(R.id.discription5);
+        mApparentTemp = findViewById(R.id.weatherApparent);
         mLastUpdate = findViewById(R.id.lastUpdate);
 
         checkConnection();
@@ -169,7 +181,7 @@ public class MainActivity extends AppCompatActivity {
             public void onResponse(Call<Crypto> call, Response<Crypto> response) {
                 try {
                     String btc = (response.body().getTicker().getPrice());
-                    mBtc.setText("bitcoin " + btc.substring(0, btc.indexOf(".")) + "$");
+                    mBtc.setText("B " + btc.substring(0, btc.indexOf(".")) + "$");
 
                     // Задаем время последнего апдейта информации
 //                    DateFormat df = new SimpleDateFormat("dd MMM, HH:mm");
@@ -205,7 +217,7 @@ public class MainActivity extends AppCompatActivity {
             public void onResponse(Call<Ethereum> call, Response<Ethereum> response) {
                 try {
                     String ethereum = (response.body().getTicker().getPrice());
-                    mEth.setText("ethereum " + ethereum.substring(0, ethereum.indexOf(".")) + "$");
+                    mEth.setText("E " + ethereum.substring(0, ethereum.indexOf(".")) + "$");
 
                     // Задаем время последнего апдейта информации
 //                    DateFormat df = new SimpleDateFormat("dd MMM, HH:mm");
@@ -222,6 +234,43 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<Ethereum> call, Throwable t) {
+                Log.d("Error", t.toString());
+                //mSwipeRefreshLayout.setRefreshing(false);
+            }
+        });
+    }
+
+    // Грузим температуру с weatherbit.io (как ощущается в градусах)
+    public void loadApparentTemp() {
+        Retrofit client = new Retrofit.Builder()
+                .baseUrl(WEATHERBIT_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        WeatherbitApi service = client.create(WeatherbitApi.class);
+        Call<Weatherbit> call = service.getValues(mChoiseTownFromSettings, WEATHERBIT_API);// инфо о криптовалюте
+        call.enqueue(new Callback<Weatherbit>() {
+            @Override
+            public void onResponse(Call<Weatherbit> call, Response<Weatherbit> response) {
+                try {
+                    Double temp = (response.body().getData().get(0).getAppTemp());
+                    String apparentT = String.valueOf(temp);
+                    mApparentTemp.setText("Ощущается как: " + apparentT.substring(0, apparentT.indexOf(".")) + "°");
+
+                    // Задаем время последнего апдейта информации
+//                    DateFormat df = new SimpleDateFormat("dd MMM, HH:mm");
+//                    String date11 = df.format(Calendar.getInstance().getTime());
+//                    mLastUpdate.setText("Обновлено: "  + date11);
+
+                    // сохраняем всю информацию в sp
+                    saveAllDataToSharedPref();
+                } catch (Exception e) {
+                    Log.d("onResponse", "There is an error");
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Weatherbit> call, Throwable t) {
                 Log.d("Error", t.toString());
                 //mSwipeRefreshLayout.setRefreshing(false);
             }
@@ -393,10 +442,32 @@ public class MainActivity extends AppCompatActivity {
                     String date______ = (date3.substring(8, 10));
                     mDate3.setText((date______ + "/" + date_____));
 
-                    String celcuiss2 = (response.body().getList().get(21).getMain().getTemp().toString());
-                    mCelcius3.setText((celcuiss2.substring(0, celcuiss2.indexOf(".")) + "°"));
+                    String celcuiss3 = (response.body().getList().get(21).getMain().getTemp().toString());
+                    mCelcius3.setText((celcuiss3.substring(0, celcuiss3.indexOf(".")) + "°"));
 
                     mDiscription3.setText(response.body().getList().get(21).getWeather().get(0).getDescription().toString());
+
+                    // грузим четвертую погоду через два дня
+                    String date4 = (response.body().getList().get(29).getDtTxt().toString());
+                    String date_______ = (date4.substring(5, 7));
+                    String date________ = (date4.substring(8, 10));
+                    mDate4.setText((date________ + "/" + date_______));
+
+                    String celcuiss4 = (response.body().getList().get(29).getMain().getTemp().toString());
+                    mCelcius4.setText((celcuiss4.substring(0, celcuiss4.indexOf(".")) + "°"));
+
+                    mDiscription4.setText(response.body().getList().get(29).getWeather().get(0).getDescription().toString());
+
+                    // грузим пятую погоду через два дня
+                    String date5 = (response.body().getList().get(37).getDtTxt().toString());
+                    String date_________ = (date5.substring(5, 7));
+                    String date__________ = (date5.substring(8, 10));
+                    mDate5.setText((date__________ + "/" + date_________));
+
+                    String celcuiss5 = (response.body().getList().get(37).getMain().getTemp().toString());
+                    mCelcius5.setText((celcuiss5.substring(0, celcuiss5.indexOf(".")) + "°"));
+
+                    mDiscription5.setText(response.body().getList().get(37).getWeather().get(0).getDescription().toString());
 
                     // Задаем время последнего апдейта информации
                     DateFormat df = new SimpleDateFormat("dd MMM, HH:mm");
@@ -441,6 +512,7 @@ public class MainActivity extends AppCompatActivity {
             loadExchangeRates();
             loadBitcoin();
             loadEthereum();
+            loadApparentTemp();
         } else {
             mLoadDataDialog.cancel();
             loadAllDataFromSharedPref();

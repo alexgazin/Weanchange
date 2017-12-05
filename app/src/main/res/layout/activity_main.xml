@@ -20,15 +20,28 @@
             android:layout_height="wrap_content"
             android:text="@string/nametown"
             android:textColor="#FFFF"
-            android:textSize="20sp" />
+            android:textSize="16sp" />
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/ll2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
 
         <ImageView
             android:id="@+id/iconWeather"
-            android:layout_width="match_parent"
-            android:layout_height="120dp"
+            android:layout_width="167dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="center_horizontal"
             android:layout_marginTop="1dp"
             android:gravity="center"
             android:src="@drawable/haze" />
+
+        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            android:id="@+id/ll3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
         <TextView
             android:id="@+id/celcius"
@@ -38,7 +51,17 @@
             android:gravity="center"
             android:text="Celcius"
             android:textColor="#FFFF"
-            android:textSize="36sp" />
+            android:textSize="40sp" />
+
+        <TextView
+            android:id="@+id/weatherApparent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="1dp"
+            android:gravity="center"
+            android:text="ApparentTemp"
+            android:textColor="#FFFF"
+            android:textSize="16sp" />
 
         <TextView
             android:id="@+id/weatherSys"
@@ -70,23 +93,27 @@
             android:textColor="#FFFF"
             android:textSize="16sp" />
 
+        </LinearLayout>
+
+    </LinearLayout>
+
     </LinearLayout>
 
     <TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/tableLayout1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:paddingTop="310dp"
-        android:shrinkColumns="*"
+        android:paddingTop="200dp"
+        android:shrinkColumns="4"
         android:stretchColumns="*">
 
         <TableRow
             android:layout_width="wrap_content"
-            android:layout_height="50dp">
+            android:layout_height="10dp">
 
             <TextView
                 android:id="@+id/date1"
-                android:layout_width="150dp"
+                android:layout_width="wrap_content"
                 android:layout_height="40dp"
                 android:layout_gravity="center_horizontal"
                 android:text="Дата1"
@@ -94,13 +121,62 @@
                 android:textSize="16sp" />
 
             <TextView
-                android:id="@+id/date2"
+                android:id="@+id/celcius1"
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:text="Погода1"
+                android:textColor="#FFFF"
+                android:textSize="16sp"
+                android:textStyle="normal" />
+
+            <TextView
+                android:id="@+id/discription1"
                 android:layout_width="150dp"
-                android:layout_height="40dp"
+                android:layout_height="match_parent"
+                android:layout_gravity="center_horizontal"
+                android:text="Описание1"
+                android:textColor="#FFFF"
+                android:textSize="14sp" />
+
+        </TableRow>
+
+        <TableRow
+            android:layout_width="wrap_content"
+            android:layout_height="10dp">
+
+            <TextView
+                android:id="@+id/date2"
+                android:layout_width="84dp"
+                android:layout_height="match_parent"
                 android:layout_gravity="center_horizontal"
                 android:text="Дата2"
                 android:textColor="#FFFF"
                 android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/celcius2"
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:text="Погода2"
+                android:textColor="#FFFF"
+                android:textSize="16sp"
+                android:textStyle="normal" />
+
+            <TextView
+                android:id="@+id/discription2"
+                android:layout_width="wrap_content"
+                android:layout_height="44dp"
+                android:layout_gravity="center_horizontal"
+                android:text="Описание2"
+                android:textColor="#FFFF"
+                android:textSize="14sp" />
+
+
+        </TableRow>
+
+        <TableRow
+            android:layout_width="wrap_content"
+            android:layout_height="50dp">
 
             <TextView
                 android:id="@+id/date3"
@@ -110,110 +186,109 @@
                 android:text="Дата3"
                 android:textColor="#FFFF"
                 android:textSize="16sp" />
-        </TableRow>
-
-        <TableRow
-            android:layout_width="wrap_content"
-            android:layout_height="10dp">
-
-            <TextView
-                android:id="@+id/celcius1"
-                android:layout_width="wrap_content"
-                android:layout_height="30dp"
-                android:layout_gravity="center_horizontal"
-                android:text="Погода1"
-                android:textColor="#FFFF"
-                android:textSize="18sp"
-                android:textStyle="normal" />
-
-            <TextView
-                android:id="@+id/celcius2"
-                android:layout_width="wrap_content"
-                android:layout_height="30dp"
-                android:layout_gravity="center_horizontal"
-                android:text="Погода2"
-                android:textColor="#FFFF"
-                android:textSize="18sp"
-                android:textStyle="normal" />
 
             <TextView
                 android:id="@+id/celcius3"
                 android:layout_width="wrap_content"
                 android:layout_height="30dp"
-                android:layout_gravity="center_horizontal"
                 android:text="Погода3"
                 android:textColor="#FFFF"
-                android:textSize="18sp"
+                android:textSize="16sp"
                 android:textStyle="normal" />
-        </TableRow>
-
-        <TableRow
-            android:layout_width="wrap_content"
-            android:layout_height="50dp">
-
-            <ImageView
-                android:id="@+id/iconWeather1"
-                android:layout_width="5dp"
-                android:layout_height="match_parent"
-                android:layout_gravity="center_horizontal"
-                android:src="@drawable/sun" />
-
-            <ImageView
-                android:id="@+id/iconWeather2"
-                android:layout_width="5dp"
-                android:layout_height="match_parent"
-                android:layout_gravity="center_horizontal"
-                android:src="@drawable/sun" />
-
-            <ImageView
-                android:id="@+id/iconWeather3"
-                android:layout_width="5dp"
-                android:layout_height="40dp"
-                android:layout_gravity="center_horizontal"
-                android:src="@drawable/sun" />
-        </TableRow>
-
-        <TableRow
-            android:layout_width="wrap_content"
-            android:layout_height="50dp">
-
-            <TextView
-                android:id="@+id/discription1"
-                android:layout_width="150dp"
-                android:layout_height="match_parent"
-                android:layout_gravity="center_horizontal"
-                android:paddingLeft="40dp"
-                android:text="Описание1"
-                android:textColor="#FFFF"
-                android:textSize="14sp" />
-
-            <TextView
-                android:id="@+id/discription2"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_gravity="center_horizontal"
-                android:paddingLeft="40dp"
-                android:text="Описание2"
-                android:textColor="#FFFF"
-                android:textSize="14sp" />
 
             <TextView
                 android:id="@+id/discription3"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_gravity="center_horizontal"
-                android:paddingLeft="40dp"
                 android:text="Описание3"
                 android:textColor="#FFFF"
                 android:textSize="14sp" />
-        </TableRow>
 
+        </TableRow>
 
         <TableRow
             android:layout_width="wrap_content"
-            android:layout_height="50dp"
-            android:paddingLeft="50dp"
-            android:paddingTop="50dp">
+            android:layout_height="50dp">
+
+            <TextView
+                android:id="@+id/date4"
+                android:layout_width="150dp"
+                android:layout_height="40dp"
+                android:layout_gravity="center_horizontal"
+                android:text="Дата4"
+                android:textColor="#FFFF"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/celcius4"
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:text="Погода4"
+                android:textColor="#FFFF"
+                android:textSize="16sp"
+                android:textStyle="normal" />
+
+
+            <TextView
+                android:id="@+id/discription4"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="center_horizontal"
+                android:text="Описание4"
+                android:textColor="#FFFF"
+                android:textSize="14sp" />
+
+
+        </TableRow>
+
+        <TableRow
+            android:layout_width="wrap_content"
+            android:layout_height="50dp">
+
+            <TextView
+                android:id="@+id/date5"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_gravity="center_horizontal"
+                android:text="Дата5"
+                android:textColor="#FFFF"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/celcius5"
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:text="Погода5"
+                android:textColor="#FFFF"
+                android:textSize="16sp"
+                android:textStyle="normal" />
+
+
+            <TextView
+                android:id="@+id/discription5"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="center_horizontal"
+                android:text="Описание5"
+                android:textColor="#FFFF"
+                android:textSize="14sp" />
+
+
+        </TableRow>
+    </TableLayout>
+
+    <TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/tableLayout2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingTop="450dp"
+        android:shrinkColumns="4"
+        android:stretchColumns="*">
+
+        <TableRow
+            android:layout_width="wrap_content"
+            android:layout_height="10dp">
 
             <TextView
                 android:id="@+id/usd"
@@ -237,18 +312,16 @@
 
         </TableRow>
 
-
         <TableRow
             android:layout_width="wrap_content"
-            android:layout_height="50dp"
-            android:paddingLeft="50dp">
+            android:layout_height="50dp">
 
             <TextView
                 android:id="@+id/btc"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="34dp"
                 android:layout_gravity="center_horizontal"
+                android:layout_marginTop="34dp"
                 android:text="Btc"
                 android:textColor="#FFFF"
                 android:textSize="16sp" />
@@ -257,11 +330,12 @@
                 android:id="@+id/eth"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="34dp"
                 android:layout_gravity="center_horizontal"
+                android:layout_marginTop="34dp"
                 android:text="Eth"
                 android:textColor="#FFFF"
                 android:textSize="16sp" />
+
         </TableRow>
     </TableLayout>
 
